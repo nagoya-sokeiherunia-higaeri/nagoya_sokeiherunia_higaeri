@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>太田医院 名古屋そけいヘルニア日帰りクリニック｜患者様アンケート＆構築ツール</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans JP', 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .option-card {
+      transition: all 0.15s ease-in-out;
+    }
+    .option-card:hover {
+      border-color: #38bdf8;
+      background-color: #f0f9ff;
+    }
+    .option-selected {
+      border-color: #0284c7 !important;
+      background-color: #e0f2fe !important;
+      box-shadow: 0 0 0 1px #0284c7;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Navigation Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-lg bg-sky-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+          太
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-base font-bold text-slate-800 leading-tight">
+            太田医院 名古屋そけいヘルニア日帰りクリニック
+          </h1>
+          <p class="text-xs text-slate-500">患者様アンケートシステム ＆ Googleフォーム構築キット</p>
+        </div>
+      </div>
+
+      <!-- Mode Tabs -->
+      <nav class="flex items-center bg-slate-100 p-1 rounded-lg text-xs sm:text-sm font-medium">
+        <button id="tabBtnSurvey" onclick="switchTab('survey')" class="px-3 py-1.5 rounded-md bg-white text-sky-700 shadow-sm transition">
+          1. アンケート画面
+        </button>
+        <button id="tabBtnGoogleForm" onclick="switchTab('googleform')" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition">
+          2. Googleフォーム作成
+        </button>
+        <button id="tabBtnAdmin" onclick="switchTab('admin')" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition">
+          3. 集計・規約設定
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Toast Notification -->
+  <div id="toastBox" class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 text-white text-sm px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
+    <span id="toastText">コピーしました</span>
+  </div>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-6">
+
+    <!-- ==================== TAB 1: SURVEY VIEW ==================== -->
+    <section id="viewSurvey" class="space-y-5">
+
+      <!-- Survey Form Card -->
+      <div id="surveyFormContainer" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-sky-600 to-sky-700 px-6 py-5 text-white">
+          <p class="text-xs font-medium text-sky-100 tracking-wider uppercase">Patient Questionnaire</p>
+          <h2 class="text-lg sm:text-xl font-bold mt-0.5">ご来院アンケートのお願い</h2>
+          <p class="text-xs sm:text-sm text-sky-100 mt-1">
+            より良い医療・クリニックづくりのため、率直なご意見をお聞かせください（所要時間：約1分）。
+          </p>
+        </div>
+
+        <form id="clinicSurveyForm" onsubmit="handleSurveySubmit(event)" class="p-5 sm:p-7 space-y-7">
+
+          <!-- Error Banner -->
+          <div id="formErrorBanner" class="hidden bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm font-medium">
+            必須項目（①〜④）をご選択ください。
+          </div>
+
+          <!-- Q1 -->
+          <div class="space-y-3" id="q1Block">
+            <label class="block text-sm sm:text-base font-bold text-slate-800">
+              <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-100 text-sky-700 text-xs font-bold mr-1.5">①</span>
+              本日はどのような内容で来院されましたか。
+              <span class="ml-2 text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">必須</span>
+            </label>
+            <div id="q1Options" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+          </div>
+
+          <!-- Q2 -->
+          <div class="space-y-3 pt-2 border-t border-slate-100" id="q2Block">
+            <label class="block text-sm sm:text-base font-bold text-slate-800">
+              <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-100 text-sky-700 text-xs font-bold mr-1.5">②</span>
+              当院をなぜ選びましたか。<span class="text-xs font-normal text-slate-500 ml-1">（複数選択可）</span>
+              <span class="ml-2 text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">必須</span>
+            </label>
+            <div id="q2Options" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+            <div id="q2OtherWrap" class="hidden pt-1">
+              <input type="text" id="q2OtherInput" placeholder="「その他」の具体的な内容をご記入ください（任意）"
+                class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500" />
+            </div>
+          </div>
+
+          <!-- Q3 -->
+          <div class="space-y-3 pt-2 border-t border-slate-100" id="q3Block">
+            <label class="block text-sm sm:text-base font-bold text-slate-800">
+              <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-100 text-sky-700 text-xs font-bold mr-1.5">③</span>
+              当院の評価を教えてください。
+              <span class="ml-2 text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">必須</span>
+            </label>
+            <div id="q3Options" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+          </div>
+
+          <!-- Q4 -->
+          <div class="space-y-3 pt-2 border-t border-slate-100" id="q4Block">
+            <label class="block text-sm sm:text-base font-bold text-slate-800">
+              <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-100 text-sky-700 text-xs font-bold mr-1.5">④</span>
+              その理由を教えてください。<span class="text-xs font-normal text-slate-500 ml-1">（複数選択可）</span>
+              <span class="ml-2 text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">必須</span>
+            </label>
+            <div id="q4Options" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+          </div>
+
+          <!-- Q5 -->
+          <div class="space-y-2 pt-2 border-t border-slate-100">
+            <label for="q5Input" class="block text-sm sm:text-base font-bold text-slate-800">
+              <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-100 text-sky-700 text-xs font-bold mr-1.5">⑤</span>
+              自由記入欄
+              <span class="ml-2 text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">任意</span>
+            </label>
+            <p class="text-xs text-slate-500">診察や手術のご感想、スタッフへのメッセージ、改善のご要望などをご自由にお書きください。</p>
+            <textarea id="q5Input" rows="3" placeholder="例：日帰り手術で当日に帰宅でき、説明も丁寧で安心できました。"
+              class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"></textarea>
+          </div>
+
+          <!-- Q6 -->
+          <div class="space-y-2 pt-2 border-t border-slate-100">
+            <label for="q6Input" class="block text-sm sm:text-base font-bold text-slate-800">
+              <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-100 text-sky-700 text-xs font-bold mr-1.5">⑥</span>
+              お名前
+              <span class="ml-2 text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">任意</span>
+            </label>
+            <input type="text" id="q6Input" placeholder="例：山田 太郎（無記名でも送信いただけます）"
+              class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-3">
+            <button type="submit"
+              class="w-full py-3.5 px-6 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-bold text-base rounded-xl shadow-md transition flex items-center justify-center gap-2">
+              <span>アンケートを送信する</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Completion Screen (Hidden until submit) -->
+      <div id="surveyResultContainer" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
+        <div class="text-center space-y-2">
+          <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center text-2xl font-bold">
+            ✓
+          </div>
+          <h3 class="text-xl font-bold text-slate-800">アンケートのご回答ありがとうございました</h3>
+          <p id="resultSubMessage" class="text-sm text-slate-600">
+            いただいた貴重なご意見は、今後の診療・クリニック運営の改善に活かしてまいります。
+          </p>
+        </div>
+
+        <!-- Google Maps Invitation Card (Shown when Q3 is 非常に良い or 良い, or when compliant mode is ON) -->
+        <div id="googleMapsRedirectCard" class="hidden bg-gradient-to-br from-sky-50 to-indigo-50 border-2 border-sky-200 rounded-2xl p-5 sm:p-6 space-y-4">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0 font-bold text-lg">
+              G
+            </div>
+            <div class="space-y-1">
+              <span class="inline-block text-xs font-bold text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-full">
+                高いご評価をいただきありがとうございます
+              </span>
+              <h4 class="text-base sm:text-lg font-bold text-slate-800">
+                よろしければGoogleマップでのクチコミ投稿にご協力をお願いいたします
+              </h4>
+              <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                同じように鼠径ヘルニアや臍ヘルニアでお悩みの患者様が安心して受診できるよう、<strong>太田医院 名古屋そけいヘルニア日帰りクリニック</strong>のGoogleマップ評価ページにてご感想をシェアいただけますと幸いです。
+              </p>
+            </div>
+          </div>
+
+          <!-- Copy Free Text Helper -->
+          <div id="copyCommentHelper" class="bg-white/90 border border-slate-200 rounded-xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700">⑤で記入したご感想・選択内容の下書き（コピーして貼り付けられます）</span>
+              <button type="button" onclick="copyReviewDraft()" class="text-xs font-semibold text-sky-700 hover:text-sky-800 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-md transition">
+                下書きをコピー
+              </button>
+            </div>
+            <p id="reviewDraftPreview" class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100 whitespace-pre-wrap"></p>
+          </div>
+
+          <!-- Primary CTA to Google Maps -->
+          <div class="pt-1 flex flex-col sm:flex-row gap-3">
+            <a id="googleMapsLinkBtn" href="https://maps.app.goo.gl/DygSNSjnrhZ2e19w9?g_st=ic" target="_blank" rel="noopener noreferrer"
+              onclick="copyReviewDraftSilent()"
+              class="flex-1 py-3.5 px-5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm sm:text-base rounded-xl shadow-md text-center transition flex items-center justify-center gap-2">
+              <span>Googleマップの評価ページを開く</span>
+              <span class="text-xs opacity-90">↗</span>
+            </a>
+          </div>
+          <p class="text-[11px] text-slate-500 text-center">
+            ※ボタンを押すと下書きが自動コピーされ、名古屋そけいヘルニア日帰りクリニックのGoogleマップ画面が開きます。
+          </p>
+        </div>
+
+        <!-- Internal Feedback Followup Card (Shown when Q3 is まあまあ良い or lower) -->
+        <div id="internalFeedbackCard" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-2 text-center">
+          <p class="text-sm font-semibold text-slate-700">
+            ご期待に添えない点があり大変申し訳ございませんでした。
+          </p>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            ご回答いただいた内容は院長およびスタッフ間で速やかに共有し、待ち時間や対応・設備の改善に真摯に取り組んでまいります。
+          </p>
+        </div>
+
+        <div class="pt-2 text-center">
+          <button type="button" onclick="resetSurveyForm()" class="px-5 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+            ← アンケート入力画面に戻る
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================== TAB 2: GOOGLE FORMS GENERATOR ==================== -->
+    <section id="viewGoogleForm" class="hidden space-y-6">
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <span class="text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full">Googleフォーム完全自動化</span>
+            <h2 class="text-lg font-bold text-slate-800 mt-2">
+              Googleフォームで「③が『非常に良い』『良い』の人だけ」にマップURLを出す仕組み
+            </h2>
+          </div>
+        </div>
+
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Googleフォームの仕様上、最後の「送信後の完了メッセージ」は全員共通で1つしか設定できません。そのため、<strong>③の回答直後にセクションを2系統（高評価ルート／通常ルート）に分岐</strong>させ、高評価ルート側の最終セクション（④〜⑥）にGoogleマップ評価ページへの案内リンクを配置するか、送信完了メッセージに案内を出す設計にします。
+        </p>
+
+        <!-- Visual Flow Diagram -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Googleフォームのセクション分岐構造</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div class="bg-white p-3.5 rounded-lg border border-slate-200 shadow-sm">
+              <div class="font-bold text-sky-700 mb-1">セクション1（共通）</div>
+              <p class="text-slate-600">① 来院内容<br>② 当院を選んだ理由<br>③ 当院の評価（★ここで分岐設定）</p>
+            </div>
+            <div class="bg-sky-50 p-3.5 rounded-lg border border-sky-200 shadow-sm">
+              <div class="font-bold text-sky-800 mb-1">セクション2（③で1・2を選択）</div>
+              <p class="text-slate-700">④ 理由 ／ ⑤ 自由記入欄 ／ ⑥ お名前<br><strong class="text-sky-700">＋Googleマップ評価ページへの案内リンク表示</strong> → 送信</p>
+            </div>
+            <div class="bg-slate-100 p-3.5 rounded-lg border border-slate-300 shadow-sm">
+              <div class="font-bold text-slate-700 mb-1">セクション3（③で3〜7を選択）</div>
+              <p class="text-slate-600">④ 理由 ／ ⑤ 自由記入欄 ／ ⑥ お名前<br><span class="text-slate-500">（Googleマップ案内なし）</span> → そのまま送信</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- GAS Code Box -->
+        <div class="space-y-2 pt-2">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h3 class="text-sm font-bold text-slate-800">ワンクリック自動作成用 Google Apps Script (GAS)</h3>
+              <p class="text-xs text-slate-500">
+                Googleドライブで「新規」→「その他」→「Google Apps Script」を開き、以下のコードを貼り付けて実行（▶）するだけで、上記①〜⑥と条件分岐がすべて設定済みのGoogleフォームが自動生成されます。
+              </p>
+            </div>
+            <button type="button" onclick="copyGasCode()" class="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-lg shadow-sm transition">
+              GASコードをコピー
+            </button>
+          </div>
+
+          <pre id="gasCodeBlock" class="bg-slate-900 text-slate-100 p-4 rounded-xl text-xs overflow-x-auto leading-relaxed max-h-96"></pre>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================== TAB 3: ADMIN & POLICY SETTINGS ==================== -->
+    <section id="viewAdmin" class="hidden space-y-6">
+
+      <!-- Quick Demo Simulator Bar (For Clinic Director Testing) -->
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-2 text-amber-900 font-medium">
+          <span class="px-2 py-0.5 bg-amber-200 text-amber-900 rounded font-bold">院長テスト用</span>
+          <span>ワンタップで回答を入れて分岐動作（③の選択による画面の違い）を確認できます：</span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" onclick="fillDemoData('high')" class="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-medium transition shadow-sm">
+            ★「非常に良い」でテスト入力
+          </button>
+          <button type="button" onclick="fillDemoData('low')" class="px-2.5 py-1.5 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition shadow-sm">
+            「まあまあ良い」以下でテスト入力
+          </button>
+          <button type="button" onclick="resetSurveyForm()" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg font-medium transition">
+            クリア
+          </button>
+        </div>
+      </div>
+
+      <!-- Policy Warning & Mode Switch Card -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full text-xs font-bold">重要：運用上のリスクと対策</span>
+          <h2 class="text-base sm:text-lg font-bold text-slate-800">Googleマップの「レビューゲーティング」規約について</h2>
+        </div>
+
+        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+          Googleビジネスプロフィールのポリシー（虚偽のエンゲージメントに関する規定）では、<strong>「満足度が高い患者様だけをGoogleのクチコミ投稿へ誘導し、低評価の患者様を誘導しない行為（レビューゲーティング）」</strong>が禁止されています。発覚や通報があった場合、既存のクチコミの一括削除やビジネスプロフィールの制限を受けるリスクがあります。
+        </p>
+
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <div class="text-sm font-bold text-slate-800">現在のアンケート動作モード切替</div>
+              <p id="currentPolicyModeDesc" class="text-xs text-slate-500 mt-0.5">
+                現在：【ご指定モード】③で「非常に良い」「良い」を選んだ方のみGoogleマップ案内を表示します。
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" id="modeBtnGated" onclick="setRoutingMode('gated')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-600 text-white shadow-sm">
+                高評価のみ案内（ご指定仕様）
+              </button>
+              <button type="button" id="modeBtnCompliant" onclick="setRoutingMode('compliant')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 border border-slate-300">
+                Google規約準拠モード（推奨）
+              </button>
+            </div>
+          </div>
+          <p class="text-xs text-slate-500 border-t border-slate-200 pt-2.5">
+            💡 <strong>Google規約準拠モード（推奨）とは：</strong>「非常に良い」「良い」の方には大きなボタンでクチコミ投稿をお願いし、「まあまあ良い」以下の方には「院内改善のため院長へ直接メッセージを送る」案内をメインにしつつ、画面下部に小さくGoogleマップのリンクも残すことで、「特定の回答者からクチコミリンクを隠した」とみなされる規約違反リスクを回避する安全な方式です。
+          </p>
+        </div>
+      </div>
+
+      <!-- Submitted Responses Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h3 class="text-base font-bold text-slate-800">アンケート回答データ一覧（プレビュー・テスト履歴）</h3>
+            <p class="text-xs text-slate-500">「1. アンケート画面」で送信した回答がリアルタイムに記録されます。</p>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" onclick="exportCsv()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition">
+              CSVダウンロード
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 text-slate-500 bg-slate-50">
+                <th class="py-2.5 px-3 font-semibold">日時</th>
+                <th class="py-2.5 px-3 font-semibold">①来院内容</th>
+                <th class="py-2.5 px-3 font-semibold">②選んだ理由</th>
+                <th class="py-2.5 px-3 font-semibold">③評価</th>
+                <th class="py-2.5 px-3 font-semibold">④理由</th>
+                <th class="py-2.5 px-3 font-semibold">⑤自由記入</th>
+                <th class="py-2.5 px-3 font-semibold">⑥お名前</th>
+                <th class="py-2.5 px-3 font-semibold">マップ案内</th>
+              </tr>
+            </thead>
+            <tbody id="responseTableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script>
+    // ==================== SURVEY CONFIGURATION ====================
+    const GOOGLE_MAPS_URL = 'https://maps.app.goo.gl/DygSNSjnrhZ2e19w9?g_st=ic';
+
+    const Q1_CHOICES = [
+      '鼠径部の膨隆（初診）',
+      '鼠径部の痛み（初診）',
+      '臍の膨隆（初診）',
+      '手術',
+      '術後再診（1回目）',
+      '術後再診（2回目以降）'
+    ];
+
+    const Q2_CHOICES = [
+      'インターネット検索（Google）',
+      'インターネット検索（Yahoo）',
+      'SNS（Instagram）',
+      'SNS（facebook）',
+      'SNS（X /twitter）',
+      '公式LINE',
+      '他院からの紹介',
+      'その他'
+    ];
+
+    const Q3_CHOICES = [
+      '非常に良い',
+      '良い',
+      'まあまあ良い',
+      '可',
+      'あまりよくない',
+      'よくない',
+      '悪い'
+    ];
+
+    const Q4_CHOICES = [
+      '当院の雰囲気',
+      'ドクターの診察や経験や実績',
+      '看護師の対応',
+      '受付の対応',
+      '待ち時間',
+      '手術',
+      '予約システム',
+      '立地やアクセス',
+      '診療や手術の料金'
+    ];
+
+    // App State
+    let state = {
+      q1: '',
+      q2: [],
+      q2Other: '',
+      q3: '',
+      q4: [],
+      q5: '',
+      q6: '',
+      routingMode: 'gated', // 'gated' (only 非常に良い/良い) or 'compliant'
+      responses: [
+        {
+          timestamp: '2026-11-13 10:15',
+          q1: '手術',
+          q2: ['インターネット検索（Google）', 'SNS（Instagram）'],
+          q3: '非常に良い',
+          q4: ['ドクターの診察や経験や実績', '看護師の対応', '手術', '立地やアクセス'],
+          q5: '名古屋駅から近く、日帰り腹腔鏡手術で安心して受けられました。',
+          q6: 'K.S',
+          guidedToMap: '案内済'
+        },
+        {
+          timestamp: '2026-11-13 11:05',
+          q1: '鼠径部の膨隆（初診）',
+          q2: ['インターネット検索（Google）'],
+          q3: '良い',
+          q4: ['ドクターの診察や経験や実績', '予約システム'],
+          q5: 'Web予約がスムーズで、先生の説明も分かりやすかったです。',
+          q6: '匿名',
+          guidedToMap: '案内済'
+        },
+        {
+          timestamp: '2026-11-13 11:30',
+          q1: '術後再診（1回目）',
+          q2: ['他院からの紹介'],
+          q3: 'まあまあ良い',
+          q4: ['待ち時間', '手術'],
+          q5: '術後の経過は順調です。',
+          q6: '匿名',
+          guidedToMap: '非表示（院内共有）'
+        }
+      ]
+    };
+
+    // ==================== RENDER FUNCTIONS ====================
+    function renderOptions() {
+      // Q1 (Single Select Radio style)
+      const q1El = document.getElementById('q1Options');
+      q1El.innerHTML = Q1_CHOICES.map((item, idx) => {
+        const selected = state.q1 === item;
+        return `
+          <button type="button" onclick="selectQ1('${item}')"
+            class="option-card text-left px-3.5 py-2.5 rounded-xl border border-slate-200 flex items-center gap-2.5 text-sm ${selected ? 'option-selected font-bold text-sky-900' : 'text-slate-700 bg-white'}">
+            <span class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${selected ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300'}">
+              ${selected ? '<span class="w-1.5 h-1.5 rounded-full bg-white"></span>' : ''}
+            </span>
+            <span>${item}</span>
+          </button>
+        `;
+      }).join('');
+
+      // Q2 (Multi Select Checkbox style)
+      const q2El = document.getElementById('q2Options');
+      q2El.innerHTML = Q2_CHOICES.map((item, idx) => {
+        const selected = state.q2.includes(item);
+        return `
+          <button type="button" onclick="toggleQ2('${item}')"
+            class="option-card text-left px-3.5 py-2.5 rounded-xl border border-slate-200 flex items-center gap-2.5 text-sm ${selected ? 'option-selected font-bold text-sky-900' : 'text-slate-700 bg-white'}">
+            <span class="w-4 h-4 rounded border flex items-center justify-center shrink-0 text-[10px] ${selected ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300'}">
+              ${selected ? '✓' : ''}
+            </span>
+            <span>${item}</span>
+          </button>
+        `;
+      }).join('');
+
+      const q2OtherWrap = document.getElementById('q2OtherWrap');
+      if (state.q2.includes('その他')) {
+        q2OtherWrap.classList.remove('hidden');
+      } else {
+        q2OtherWrap.classList.add('hidden');
+      }
+
+      // Q3 (Single Select 7-level Rating)
+      const q3El = document.getElementById('q3Options');
+      q3El.innerHTML = Q3_CHOICES.map((item, idx) => {
+        const selected = state.q3 === item;
+        const isHigh = item === '非常に良い' || item === '良い';
+        return `
+          <button type="button" onclick="selectQ3('${item}')"
+            class="option-card text-left px-3.5 py-2.5 rounded-xl border border-slate-200 flex items-center justify-between gap-2 text-sm ${selected ? 'option-selected font-bold text-sky-900' : 'text-slate-700 bg-white'}">
+            <div class="flex items-center gap-2.5">
+              <span class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${selected ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300'}">
+                ${selected ? '<span class="w-1.5 h-1.5 rounded-full bg-white"></span>' : ''}
+              </span>
+              <span>${item}</span>
+            </div>
+
+          </button>
+        `;
+      }).join('');
+
+      // Q4 (Multi Select Checkbox style)
+      const q4El = document.getElementById('q4Options');
+      q4El.innerHTML = Q4_CHOICES.map((item, idx) => {
+        const selected = state.q4.includes(item);
+        return `
+          <button type="button" onclick="toggleQ4('${item}')"
+            class="option-card text-left px-3.5 py-2.5 rounded-xl border border-slate-200 flex items-center gap-2.5 text-sm ${selected ? 'option-selected font-bold text-sky-900' : 'text-slate-700 bg-white'}">
+            <span class="w-4 h-4 rounded border flex items-center justify-center shrink-0 text-[10px] ${selected ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300'}">
+              ${selected ? '✓' : ''}
+            </span>
+            <span>${item}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectQ1(val) {
+      state.q1 = val;
+      renderOptions();
+    }
+
+    function toggleQ2(val) {
+      if (state.q2.includes(val)) {
+        state.q2 = state.q2.filter(v => v !== val);
+      } else {
+        state.q2.push(val);
+      }
+      renderOptions();
+    }
+
+    function selectQ3(val) {
+      state.q3 = val;
+      renderOptions();
+    }
+
+    function toggleQ4(val) {
+      if (state.q4.includes(val)) {
+        state.q4 = state.q4.filter(v => v !== val);
+      } else {
+        state.q4.push(val);
+      }
+      renderOptions();
+    }
+
+    // ==================== SUBMIT & BRANCHING LOGIC ====================
+    function handleSurveySubmit(e) {
+      e.preventDefault();
+      const errBanner = document.getElementById('formErrorBanner');
+
+      if (!state.q1 || state.q2.length === 0 || !state.q3 || state.q4.length === 0) {
+        errBanner.classList.remove('hidden');
+        errBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      errBanner.classList.add('hidden');
+
+      state.q2Other = document.getElementById('q2OtherInput').value.trim();
+      state.q5 = document.getElementById('q5Input').value.trim();
+      state.q6 = document.getElementById('q6Input').value.trim();
+
+      const isHighRating = (state.q3 === '非常に良い' || state.q3 === '良い');
+
+      // Record response
+      const now = new Date();
+      const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      state.responses.unshift({
+        timestamp: ts,
+        q1: state.q1,
+        q2: state.q2.map(v => (v === 'その他' && state.q2Other) ? `その他(${state.q2Other})` : v),
+        q3: state.q3,
+        q4: [...state.q4],
+        q5: state.q5 || '（未記入）',
+        q6: state.q6 || '匿名',
+        guidedToMap: isHighRating ? '案内済' : (state.routingMode === 'compliant' ? '控えめ表示' : '非表示（院内共有）')
+      });
+      renderResponseTable();
+
+      // Build review draft text for convenience
+      const draftLines = [];
+      if (state.q5) {
+        draftLines.push(state.q5);
+      } else {
+        draftLines.push(`【来院内容】${state.q1}`);
+        draftLines.push(`【良かった点】${state.q4.join('・')}`);
+      }
+      document.getElementById('reviewDraftPreview').textContent = draftLines.join('\n');
+
+      // Show completion screen based on condition
+      document.getElementById('surveyFormContainer').classList.add('hidden');
+      document.getElementById('surveyResultContainer').classList.remove('hidden');
+
+      const mapCard = document.getElementById('googleMapsRedirectCard');
+      const feedbackCard = document.getElementById('internalFeedbackCard');
+
+      if (isHighRating) {
+        mapCard.classList.remove('hidden');
+        feedbackCard.classList.add('hidden');
+      } else {
+        feedbackCard.classList.remove('hidden');
+        if (state.routingMode === 'compliant') {
+          mapCard.classList.remove('hidden');
+        } else {
+          mapCard.classList.add('hidden');
+        }
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function fillDemoData(type) {
+      switchTab('survey');
+      if (type === 'high') {
+        state.q1 = '手術';
+        state.q2 = ['インターネット検索（Google）', 'SNS（Instagram）'];
+        state.q3 = '非常に良い';
+        state.q4 = ['ドクターの診察や経験や実績', '看護師の対応', '手術', '立地やアクセス'];
+        document.getElementById('q5Input').value = '名古屋駅から歩いてすぐで通いやすく、日帰りの腹腔鏡手術で痛みも少なく安心できました。';
+        document.getElementById('q6Input').value = 'テスト 太郎';
+      } else {
+        state.q1 = '鼠径部の膨隆（初診）';
+        state.q2 = ['インターネット検索（Yahoo）'];
+        state.q3 = 'まあまあ良い';
+        state.q4 = ['待ち時間', '立地やアクセス'];
+        document.getElementById('q5Input').value = '診察は丁寧でしたが、少し待ち時間がありました。';
+        document.getElementById('q6Input').value = '';
+      }
+      document.getElementById('surveyResultContainer').classList.add('hidden');
+      document.getElementById('surveyFormContainer').classList.remove('hidden');
+      document.getElementById('formErrorBanner').classList.add('hidden');
+      renderOptions();
+      showToast(type === 'high' ? '「非常に良い」のテスト回答を入力しました。「アンケートを送信する」を押してください' : '「まあまあ良い」のテスト回答を入力しました。「アンケートを送信する」を押してください');
+    }
+
+    function resetSurveyForm() {
+      state.q1 = '';
+      state.q2 = [];
+      state.q2Other = '';
+      state.q3 = '';
+      state.q4 = [];
+      state.q5 = '';
+      state.q6 = '';
+      document.getElementById('q2OtherInput').value = '';
+      document.getElementById('q5Input').value = '';
+      document.getElementById('q6Input').value = '';
+      document.getElementById('formErrorBanner').classList.add('hidden');
+      document.getElementById('surveyResultContainer').classList.add('hidden');
+      document.getElementById('surveyFormContainer').classList.remove('hidden');
+      renderOptions();
+    }
+
+    // ==================== CLIPBOARD HELPERS ====================
+    function copyTextToClipboard(text, message) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            if (message) showToast(message);
+          }).catch(() => fallbackCopy(text, message));
+        } else {
+          fallbackCopy(text, message);
+        }
+      } catch (e) {
+        fallbackCopy(text, message);
+      }
+    }
+
+    function fallbackCopy(text, message) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        if (message) showToast(message);
+      } catch (err) {}
+      document.body.removeChild(ta);
+    }
+
+    function copyReviewDraft() {
+      const text = document.getElementById('reviewDraftPreview').textContent;
+      copyTextToClipboard(text, '感想の下書きをコピーしました！Googleマップの投稿画面で貼り付けられます');
+    }
+
+    function copyReviewDraftSilent() {
+      const text = document.getElementById('reviewDraftPreview').textContent;
+      copyTextToClipboard(text, null);
+    }
+
+    function showToast(msg) {
+      const box = document.getElementById('toastBox');
+      const txt = document.getElementById('toastText');
+      txt.textContent = msg;
+      box.classList.remove('hidden');
+      setTimeout(() => {
+        box.classList.add('hidden');
+      }, 3200);
+    }
+
+    // ==================== GOOGLE FORMS GAS GENERATOR ====================
+    const GAS_CODE = `function createNagoyaHerniaClinicSurvey() {
+  const form = FormApp.create('太田医院 名古屋そけいヘルニア日帰りクリニック ご来院アンケート');
+  form.setDescription('本日はご来院いただき誠にありがとうございます。より良い医療提供のため、アンケートにご協力をお願いいたします。');
+
+  // ① 来院内容
+  form.addMultipleChoiceItem()
+    .setTitle('①本日はどのような内容で来院されましたか。')
+    .setChoiceValues([
+      '鼠径部の膨隆（初診）',
+      '鼠径部の痛み（初診）',
+      '臍の膨隆（初診）',
+      '手術',
+      '術後再診（1回目）',
+      '術後再診（2回目以降）'
+    ])
+    .setRequired(true);
+
+  // ② 当院を選んだ理由
+  form.addCheckboxItem()
+    .setTitle('②当院をなぜ選びましたか。')
+    .setChoiceValues([
+      'インターネット検索（Google）',
+      'インターネット検索（Yahoo）',
+      'SNS（Instagram）',
+      'SNS（facebook）',
+      'SNS（X /twitter）',
+      '公式LINE',
+      '他院からの紹介',
+      'その他'
+    ])
+    .setRequired(true);
+
+  // ③ 当院の評価（条件分岐の起点）
+  const q3Item = form.addMultipleChoiceItem()
+    .setTitle('③当院の評価を教えてください。')
+    .setRequired(true);
+
+  const reasons = [
+    '当院の雰囲気',
+    'ドクターの診察や経験や実績',
+    '看護師の対応',
+    '受付の対応',
+    '待ち時間',
+    '手術',
+    '予約システム',
+    '立地やアクセス',
+    '診療や手術の料金'
+  ];
+
+  // --- セクション2：高評価（「非常に良い」「良い」）ルート ---
+  const highSection = form.addPageBreakItem()
+    .setTitle('評価の理由とご感想をお聞かせください');
+
+  form.addCheckboxItem()
+    .setTitle('④その理由を教えてください。')
+    .setChoiceValues(reasons)
+    .setRequired(true);
+
+  form.addParagraphTextItem()
+    .setTitle('⑤自由記入欄（任意）')
+    .setRequired(false);
+
+  form.addTextItem()
+    .setTitle('⑥お名前（任意）')
+    .setRequired(false);
+
+  form.addSectionHeaderItem()
+    .setTitle('【Googleマップでのクチコミ投稿のお願い】')
+    .setHelpText(
+      '高いご評価をいただき誠にありがとうございます！\\n' +
+      '同じ症状でお悩みの患者様が安心して受診できるよう、ぜひ以下のリンクより当院のGoogleマップ評価ページにてご感想をご投稿いただけますと幸いです。\\n\\n' +
+      '▼太田医院 名古屋そけいヘルニア日帰りクリニック Googleマップ評価ページ\\n' +
+      'https://maps.app.goo.gl/DygSNSjnrhZ2e19w9?g_st=ic\\n\\n' +
+      '（※下の「送信」ボタンを押してアンケートを完了してください）'
+    );
+
+  highSection.setGoToPage(FormApp.PageNavigationType.SUBMIT);
+
+  // --- セクション3：通常（「まあまあ良い」〜「悪い」）ルート ---
+  const normalSection = form.addPageBreakItem()
+    .setTitle('評価の理由とご感想をお聞かせください');
+
+  form.addCheckboxItem()
+    .setTitle('④その理由を教えてください。')
+    .setChoiceValues(reasons)
+    .setRequired(true);
+
+  form.addParagraphTextItem()
+    .setTitle('⑤自由記入欄（任意）')
+    .setRequired(false);
+
+  form.addTextItem()
+    .setTitle('⑥お名前（任意）')
+    .setRequired(false);
+
+  normalSection.setGoToPage(FormApp.PageNavigationType.SUBMIT);
+
+  // ③の選択肢と分岐先を紐付け
+  q3Item.setChoices([
+    q3Item.createChoice('非常に良い', highSection),
+    q3Item.createChoice('良い', highSection),
+    q3Item.createChoice('まあまあ良い', normalSection),
+    q3Item.createChoice('可', normalSection),
+    q3Item.createChoice('あまりよくない', normalSection),
+    q3Item.createChoice('よくない', normalSection),
+    q3Item.createChoice('悪い', normalSection)
+  ]);
+
+  Logger.log('作成完了！回答用URL: ' + form.getPublishedUrl());
+  Logger.log('編集用URL: ' + form.getEditUrl());
+}`;
+
+    function copyGasCode() {
+      copyTextToClipboard(GAS_CODE, 'Googleフォーム自動作成用GASコードをコピーしました');
+    }
+
+    // ==================== ADMIN & POLICY FUNCTIONS ====================
+    function setRoutingMode(mode) {
+      state.routingMode = mode;
+      const btnGated = document.getElementById('modeBtnGated');
+      const btnComp = document.getElementById('modeBtnCompliant');
+      const desc = document.getElementById('currentPolicyModeDesc');
+
+      if (mode === 'gated') {
+        btnGated.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-600 text-white shadow-sm';
+        btnComp.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 border border-slate-300';
+        desc.textContent = '現在：【ご指定モード】③で「非常に良い」「良い」を選んだ方のみGoogleマップ案内を表示します。';
+        showToast('「高評価のみ案内（ご指定仕様）」に切り替えました');
+      } else {
+        btnComp.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow-sm';
+        btnGated.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 border border-slate-300';
+        desc.textContent = '現在：【Google規約準拠モード】全員にリンクを開放しつつ、低評価時は院内改善フォームを優先案内します。';
+        showToast('「Google規約準拠モード」に切り替えました');
+      }
+    }
+
+    function renderResponseTable() {
+      const tbody = document.getElementById('responseTableBody');
+      tbody.innerHTML = state.responses.map(r => {
+        const isHigh = r.q3 === '非常に良い' || r.q3 === '良い';
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2.5 px-3 whitespace-nowrap text-slate-500">${r.timestamp}</td>
+            <td class="py-2.5 px-3 font-medium text-slate-800">${r.q1}</td>
+            <td class="py-2.5 px-3 text-slate-600">${r.q2.join('、')}</td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded font-bold ${isHigh ? 'bg-sky-100 text-sky-800' : 'bg-slate-100 text-slate-700'}">${r.q3}</span>
+            </td>
+            <td class="py-2.5 px-3 text-slate-600">${r.q4.join('、')}</td>
+            <td class="py-2.5 px-3 text-slate-600 max-w-xs truncate">${r.q5}</td>
+            <td class="py-2.5 px-3 text-slate-600">${r.q6}</td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold ${r.guidedToMap === '案内済' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">${r.guidedToMap}</span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function exportCsv() {
+      const headers = ['日時', '①来院内容', '②選んだ理由', '③評価', '④理由', '⑤自由記入欄', '⑥お名前', 'Googleマップ案内'];
+      const rows = state.responses.map(r => [
+        r.timestamp,
+        r.q1,
+        r.q2.join(' / '),
+        r.q3,
+        r.q4.join(' / '),
+        r.q5.replace(/\n/g, ' '),
+        r.q6,
+        r.guidedToMap
+      ]);
+      const csvContent = '\uFEFF' + [headers, ...rows]
+        .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'nagoya_hernia_clinic_survey.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('CSVファイルをダウンロードしました');
+    }
+
+    // ==================== TAB NAVIGATION ====================
+    function switchTab(tab) {
+      const views = {
+        survey: document.getElementById('viewSurvey'),
+        googleform: document.getElementById('viewGoogleForm'),
+        admin: document.getElementById('viewAdmin')
+      };
+      const btns = {
+        survey: document.getElementById('tabBtnSurvey'),
+        googleform: document.getElementById('tabBtnGoogleForm'),
+        admin: document.getElementById('tabBtnAdmin')
+      };
+
+      Object.keys(views).forEach(k => {
+        if (k === tab) {
+          views[k].classList.remove('hidden');
+          btns[k].className = 'px-3 py-1.5 rounded-md bg-white text-sky-700 shadow-sm transition font-bold';
+        } else {
+          views[k].classList.add('hidden');
+          btns[k].className = 'px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition';
+        }
+      });
+    }
+
+    // Init
+    window.onload = function() {
+      renderOptions();
+      renderResponseTable();
+      document.getElementById('gasCodeBlock').textContent = GAS_CODE;
+    };
+  </script>
+</body>
+</html>
